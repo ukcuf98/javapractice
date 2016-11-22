@@ -1,11 +1,20 @@
 package executeorder;
 
 /**
- * @Description:
+ * @Description:代码执行顺序子类
  * @author: Lucifer
  * @date: 2016/11/3 9:54
  */
 public class InitClass extends SuperInitClass {
+
+    /**
+     * 先静态语句块，静态变量，按声明顺序初始化
+     * 然后变量，构造方法语句块，按声明顺序初始化
+     * 最后执行构造方法
+     *
+     * 有父类，先初始化父类
+     */
+
     static {
         System.out.println("InitClass->静态代码块 1");
     }

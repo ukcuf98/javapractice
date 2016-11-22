@@ -1,7 +1,7 @@
 package executeorder;
 
 /**
- * @Description:
+ * @Description:代码执行顺序父类
  * @author: Lucifer
  * @date: 2016/11/3 9:53
  */
