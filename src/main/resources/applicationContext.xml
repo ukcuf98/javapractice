@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="springDSN"
+          class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName"
+                  value="com.mysql.jdbc.Driver">
+        </property>
+        <property name="url"
+                  value="jdbc:mysql://qdm156196501.my3w.com:3306/qdm156196501_db">
+        </property>
+        <property name="username" value="qdm156196501"></property>
+        <property name="password" value="ukcuf981"></property>
+    </bean>
+
+    <bean id="jdbcTemplate"
+          class="org.springframework.jdbc.core.JdbcTemplate" abstract="false"
+          lazy-init="false" autowire="default">
+        <property name="dataSource">
+            <ref bean="springDSN" />
+        </property>
+    </bean>
+
+</beans>
