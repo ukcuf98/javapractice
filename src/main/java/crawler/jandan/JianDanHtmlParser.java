@@ -1,5 +1,12 @@
 package crawler.jandan;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.springframework.jdbc.core.JdbcTemplate;
+import us.codecraft.xsoup.Xsoup;
+import util.CheckUtil;
+import util.SpringUtil;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +41,6 @@ public class JianDanHtmlParser implements Runnable {
 						}catch (Exception e) {
 							System.out.println(s);
 						}
-
 					}
 				}
 			}
@@ -44,7 +50,47 @@ public class JianDanHtmlParser implements Runnable {
 				}
 			}
 		}else if(subpath.equals("duan/")){
-			System.out.println(html);
+			Document document = Jsoup.parse(html);
+			List<String> commentlist = Xsoup.compile("//ol[@class='commentlist']/li/html()").evaluate(document).list();
+			System.out.println(commentlist.size());
+			JdbcTemplate jdbcTemplate = (JdbcTemplate) SpringUtil
+					.getBean("jdbcTemplate");
+			for (String li:commentlist){
+				Document li_doc = Jsoup.parse(li);
+				String refid = Xsoup.compile("//div/div/div[@class='text']/span[@class='righttext']/a/text()").evaluate(li_doc).toString();
+				String content = Xsoup.compile("//div/div/div[@class='text']/p/html()").evaluate(li_doc).toString();
+				String upvote = Xsoup.compile("//div/div/div[@class='text']/div[@class='vote']/span[@id='cos_support-"+refid+"']/text()").evaluate(li_doc).toString();
+				String downvote = Xsoup.compile("//div/div/div[@class='text']/div[@class='vote']/span[@id='cos_unsupport-"+refid+"']/text()").evaluate(li_doc).toString();
+//				System.out.println("id="+refid+";content:"+content+";upvote:"+upvote+";downvote:"+downvote);
+
+				String sql_query = "select count(id) from duanzi where refid=?";
+				int count = jdbcTemplate.queryForObject(sql_query,new Object[]{refid},Integer.class);
+				if(count==0){
+					dealDuanZi(jdbcTemplate,refid,content,upvote,downvote);
+				}
+			}
+		}
+		System.out.println("=======第"+page+"页end========");
+	}
+
+	/**
+	 * 保存已抓取的段子内容
+	 * @param jdbcTemplate
+	 * @param refidStr
+	 * @param contentStr
+	 * @param upvoteStr
+     * @param downvoteStr
+     */
+	public void dealDuanZi(JdbcTemplate jdbcTemplate,String refidStr,String contentStr,String upvoteStr,String downvoteStr){
+		try {
+			Integer refid = CheckUtil.parseInteger(refidStr);
+			Integer upvote = CheckUtil.parseInteger(upvoteStr);
+			Integer downvote = CheckUtil.parseInteger(downvoteStr);
+			String sql_insert = "insert into duanzi (refid,title,content,upvote,downvote) values(?,?,?,?,?)";
+			jdbcTemplate.update(sql_insert,new Object[]{refid,refidStr,contentStr,upvote,downvote});
+		}catch (Exception e){
+			e.printStackTrace();
+			System.out.println("page:"+page+";refid:"+refidStr);
 		}
 	}
 }
