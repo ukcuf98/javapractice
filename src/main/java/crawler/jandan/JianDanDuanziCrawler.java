@@ -17,8 +17,8 @@ import java.util.Date;
  */
 public class JianDanDuanziCrawler {
 	// 起始页码
-	private static final int page_start = 1001;
-	private static final int page_end = 1500;
+	private static final int page_start = 1501;
+	private static final int page_end = 1700;
 	private static final String type = "duan/";//"ooxx/"或"pic/"
 	private static final String subpath = "duan/";//"meizi/"或"wuliao/"
 	private static final String pictypename = "段子";//"无聊图/"或"妹子图/"
