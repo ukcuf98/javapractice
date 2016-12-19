@@ -20,6 +20,7 @@ public class JianDanHtmlParser implements Runnable {
 	private String html;
 	private int page;
 	private String subpath;
+	private static String tableName = "";
 	public JianDanHtmlParser(String html,int page,String subpath) {
 		this.html = html;
 		this.page = page;
@@ -30,33 +31,8 @@ public class JianDanHtmlParser implements Runnable {
 		System.out.println("==========第"+page+"页============");
 		JdbcTemplate jdbcTemplate = (JdbcTemplate) SpringUtil
 				.getBean("jdbcTemplate");
-		if(subpath.equals("wuliao/")){
+		if(subpath.equals("wuliao/") || subpath.equals("meizi/")){
 			Document document = Jsoup.parse(html);
-			System.out.println(html);
-			List<String> commentlist = Xsoup.compile("//ol[@class='commentlist']/li/html()").evaluate(document).list();
-			for (String li:commentlist){
-				Document li_doc = Jsoup.parse(li);
-				String refid = Xsoup.compile("//div/div/div[@class='text']/span[@class='righttext']/a/text()").evaluate(li_doc).toString();
-				if(StringUtils.isBlank(refid)){
-					continue;
-				}
-				List<String> imgUrlList = Xsoup.compile("//div/div/div[@class='text']/p//img/@src").evaluate(li_doc).list();
-				if(null == imgUrlList || imgUrlList.size()==0){
-					continue;
-				}
-				String imgUrls = StringUtils.join(imgUrlList.toArray(),";");
-				imgUrls = imgUrls.replaceAll("bmiddle","large");
-				String upvote = Xsoup.compile("//div/div/div[@class='text']/div[@class='vote']/span[@id='cos_support-"+refid+"']/text()").evaluate(li_doc).toString();
-				String downvote = Xsoup.compile("//div/div/div[@class='text']/div[@class='vote']/span[@id='cos_unsupport-"+refid+"']/text()").evaluate(li_doc).toString();
-				String sql_query = "select count(id) from wuliaopic where refid=?";
-				int count = jdbcTemplate.queryForObject(sql_query,new Object[]{refid},Integer.class);
-				if(count==0){
-					dealWuliaoPic(jdbcTemplate,refid,imgUrls,upvote,downvote);
-				}
-			}
-		}else if(subpath.equals("meizi/")){
-			Document document = Jsoup.parse(html);
-			System.out.println(html);
 			List<String> commentlist = Xsoup.compile("//ol[@class='commentlist']/li/html()").evaluate(document).list();
 			for (String li:commentlist){
 				Document li_doc = Jsoup.parse(li);
@@ -71,13 +47,10 @@ public class JianDanHtmlParser implements Runnable {
 				String imgUrls = StringUtils.join(imgUrlList.toArray(),";");
 				imgUrls = imgUrls.replaceAll("bmiddle","large");
 				imgUrls = imgUrls.replaceAll("thumb180","large");
+				imgUrls = imgUrls.replaceAll("mw600","large");
 				String upvote = Xsoup.compile("//div/div/div[@class='text']/div[@class='vote']/span[@id='cos_support-"+refid+"']/text()").evaluate(li_doc).toString();
 				String downvote = Xsoup.compile("//div/div/div[@class='text']/div[@class='vote']/span[@id='cos_unsupport-"+refid+"']/text()").evaluate(li_doc).toString();
-				String sql_query = "select count(id) from meizipic where refid=?";
-				int count = jdbcTemplate.queryForObject(sql_query,new Object[]{refid},Integer.class);
-				if(count==0){
-					dealMeiziPic(jdbcTemplate,refid,imgUrls,upvote,downvote);
-				}
+				dealPicData(jdbcTemplate,refid,imgUrls,upvote,downvote,subpath);
 			}
 		}else if(subpath.equals("duan/")){
 			Document document = Jsoup.parse(html);
@@ -108,6 +81,32 @@ public class JianDanHtmlParser implements Runnable {
 	}
 
 	/**
+	 * 处理抓取的图片数据
+	 * @param jdbcTemplate
+	 * @param refidStr
+	 * @param imgUrls
+	 * @param upvoteStr
+	 * @param downvoteStr
+     * @param subpath
+     */
+	public void dealPicData(JdbcTemplate jdbcTemplate,String refidStr,String imgUrls,String upvoteStr,String downvoteStr,String subpath){
+		if(subpath.equals("wuliao/")){
+			tableName = "wuliaopic";
+		}else if(subpath.equals("meizi/")){
+			tableName = "meizipic";
+		}
+		Integer refid = CheckUtil.parseInteger(refidStr);
+		Integer upvote = CheckUtil.parseInteger(upvoteStr);
+		Integer downvote = CheckUtil.parseInteger(downvoteStr);
+		String sql_query = "select count(id) from "+tableName+" where refid=?";
+		int count = jdbcTemplate.queryForObject(sql_query,new Object[]{refid},Integer.class);
+		if(count==0){
+			String sql_insert = "insert into wuliaopic (refid,title,page,imgurls,upvote,downvote) values(?,?,?,?,?,?)";
+			jdbcTemplate.update(sql_insert,new Object[]{refid,refidStr,page,imgUrls,upvote,downvote});
+		}
+	}
+
+	/**
 	 * 保存已抓取的段子内容
 	 * @param jdbcTemplate
 	 * @param refidStr
@@ -122,48 +121,6 @@ public class JianDanHtmlParser implements Runnable {
 			Integer downvote = CheckUtil.parseInteger(downvoteStr);
 			String sql_insert = "insert into duanzi (refid,title,content,upvote,downvote) values(?,?,?,?,?)";
 			jdbcTemplate.update(sql_insert,new Object[]{refid,refidStr,contentStr,upvote,downvote});
-		}catch (Exception e){
-			e.printStackTrace();
-			System.out.println("page:"+page+";refid:"+refidStr);
-		}
-	}
-
-	/**
-	 * 保存已抓取的无聊图内容
-	 * @param jdbcTemplate
-	 * @param refidStr
-	 * @param imgUrls
-	 * @param upvoteStr
-	 * @param downvoteStr
-	 */
-	public void dealWuliaoPic(JdbcTemplate jdbcTemplate,String refidStr,String imgUrls,String upvoteStr,String downvoteStr){
-		try {
-			Integer refid = CheckUtil.parseInteger(refidStr);
-			Integer upvote = CheckUtil.parseInteger(upvoteStr);
-			Integer downvote = CheckUtil.parseInteger(downvoteStr);
-			String sql_insert = "insert into wuliaopic (refid,title,page,imgurls,upvote,downvote) values(?,?,?,?,?,?)";
-			jdbcTemplate.update(sql_insert,new Object[]{refid,refidStr,page,imgUrls,upvote,downvote});
-		}catch (Exception e){
-			e.printStackTrace();
-			System.out.println("page:"+page+";refid:"+refidStr);
-		}
-	}
-
-	/**
-	 * 保存已抓取的妹子图内容
-	 * @param jdbcTemplate
-	 * @param refidStr
-	 * @param imgUrls
-	 * @param upvoteStr
-	 * @param downvoteStr
-	 */
-	public void dealMeiziPic(JdbcTemplate jdbcTemplate,String refidStr,String imgUrls,String upvoteStr,String downvoteStr){
-		try {
-			Integer refid = CheckUtil.parseInteger(refidStr);
-			Integer upvote = CheckUtil.parseInteger(upvoteStr);
-			Integer downvote = CheckUtil.parseInteger(downvoteStr);
-			String sql_insert = "insert into meizipic (refid,title,page,imgurls,upvote,downvote) values(?,?,?,?,?,?)";
-			jdbcTemplate.update(sql_insert,new Object[]{refid,refidStr,page,imgUrls,upvote,downvote});
 		}catch (Exception e){
 			e.printStackTrace();
 			System.out.println("page:"+page+";refid:"+refidStr);

@@ -12,7 +12,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import util.SpringUtil;
 
 import java.io.*;
-import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -123,7 +122,6 @@ public class DownLoadImg {
 
                     }
                 }catch (Exception e){
-//                    e.printStackTrace();
                     System.out.println("下载失败url:"+tmpUrl);
                 }
             }

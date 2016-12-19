@@ -1,5 +1,6 @@
 package crawler.jandan;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -16,13 +17,35 @@ import java.util.Date;
  * @date: 2016/11/22 10:54
  */
 public class JanDanNetPicCrawler {
+	private static final int opertype = 1;//1:无聊图2、妹子图
 	// 起始页码
-	private static final int page_start = 1001;
-	private static final int page_end = 1500;
-	private static final String pictype = "ooxx/";//"ooxx/"或"pic/"url使用
-	private static final String subpath = "meizi/";//"meizi/"或"wuliao/"
-	private static final String pictypename = "妹子图";//"无聊图/"或"妹子图/"
+	private static int page_start = 1;
+	private static int page_end = 1;
+	private static String pictype = "";//"ooxx/"或"pic/"url使用
+	private static String subpath = "";//"meizi/"或"wuliao/"
+	private static String pictypename = "";//"无聊图/"或"妹子图/"
+
+	public static void initConfig(){
+		if(opertype == 1){
+			page_start = 1001;
+			page_end = 1500;
+			pictype = "pic/";//"ooxx/"或"pic/"url使用
+			subpath = "wuliao/";//"meizi/"或"wuliao/"
+			pictypename = "无聊图";//"无聊图/"或"妹子图/"
+		}else if(opertype == 2){
+			page_start = 1001;
+			page_end = 1500;
+			pictype = "ooxx/";//"ooxx/"或"pic/"url使用
+			subpath = "meizi/";//"meizi/"或"wuliao/"
+			pictypename = "妹子图";//"无聊图/"或"妹子图/"
+		}
+	}
+
 	public static void main(String[] args) {
+		initConfig();
+		if(StringUtils.isBlank(pictype)){
+			return;
+		}
 		// HttpClient 超时配置
 		RequestConfig globalConfig = RequestConfig.custom()
 				.setCookieSpec(CookieSpecs.STANDARD)
