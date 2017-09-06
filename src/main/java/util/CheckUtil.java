@@ -56,4 +56,9 @@ public class CheckUtil {
         }
         return retBuf.toString();
     }
+
+    public static void main(String[] args) {
+        String str = "\\U591a\\U4e00\\U5206\\U771f\\U8bda\\Uff0c\\U5c11\\U4e00\\U70b9\\U5957\\U8def\\Ud83d\\Ude14";
+        System.out.println(decode(str));
+    }
 }
