@@ -9,18 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- *
- * <p>Title: RedisBaseCache.java</p>
- *
- * <p>Package: com.wiwj.app.cache</p>
- *
- * <p>Description: Redis缓存基类</p>
- *
- * @author: 张立成
- *
- * @date: 2017年2月28日 下午12:42:31
- *
- * @version: 1.0
+ * Redis缓存基类
  */
 public abstract class RedisBaseCache {
 

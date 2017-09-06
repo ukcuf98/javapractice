@@ -7,18 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- *
- * <p>Title: RedisCache.java</p>
- *
- * <p>Package: com.wiwj.app.cache</p>
- *
- * <p>Description: Redis缓存单例类</p>
- *
- * @author: 张立成
- *
- * @date: 2017年2月28日 下午12:46:34
- *
- * @version: 1.0
+ * Redis缓存单例类
  */
 public class RedisCache extends RedisBaseCache {
 
@@ -393,10 +382,6 @@ public class RedisCache extends RedisBaseCache {
 			result = client.del(key);
 		} catch (Exception e) {
 			return null;
-		} finally {
-			if (null != client) {
-				client.close();
-			}
 		}
 		return result;
 	}
