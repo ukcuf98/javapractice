@@ -103,6 +103,12 @@
       <artifactId>jedis</artifactId>
       <version>2.9.0</version>
     </dependency>
+    <!-- es -->
+    <dependency>
+      <groupId>org.elasticsearch</groupId>
+      <artifactId>elasticsearch</artifactId>
+      <version>1.7.2</version>
+    </dependency>
   </dependencies>
   <build>
     <finalName>javapractice</finalName>

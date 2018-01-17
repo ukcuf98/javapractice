@@ -442,9 +442,19 @@ public class RedisCache extends RedisBaseCache {
 
 	public static void main(String[]args){
 		RedisCache redisCache = RedisCache.getInstance();
-		String key = "abc";
-		String setResult = redisCache.putString(key, "33312");
-//		String result = redisCache.getString(key);
-//		System.out.println("setResult="+setResult+"=="+result);
+		redisCache.putString("a","a1");
+		String result = redisCache.getString("a");
+		System.out.println(result);
+//		redisCache.del("a");
+//		result = redisCache.getString("a");
+//		System.out.println(result);
+
+//		for (int i=0;i<10000;i++){
+//			String setResult = redisCache.putString("test_"+i,(i+1)+"",300);
+//			if(!setResult.equals("OK")){
+//				System.out.println("setResult:"+i+"==="+setResult);
+//			}
+//			redisCache.del("test_"+i);
+//		}
 	}
 }

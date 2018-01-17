@@ -17,28 +17,47 @@ public abstract class RedisBaseCache {
 	private static JedisCluster jedisCluster = null;
 
 	static {
+		initClusterConfig();
+	}
+
+	private static void initClusterConfig(){
 		try {
 			Set<HostAndPort> jedisClusterNodes = new HashSet<HostAndPort>();
-        jedisClusterNodes.add(new HostAndPort("10.2.1.201", 6376));
+
+			/*sit*/
+//			jedisClusterNodes.add(new HostAndPort("10.2.1.201", 6390));
+//			jedisClusterNodes.add(new HostAndPort("10.2.1.201", 6391));
+//			jedisClusterNodes.add(new HostAndPort("10.2.1.201", 6392));
+//			jedisClusterNodes.add(new HostAndPort("10.2.1.201", 6393));
+//			jedisClusterNodes.add(new HostAndPort("10.2.1.201", 6394));
+//			jedisClusterNodes.add(new HostAndPort("10.2.1.201", 6395));
+
+			/*sut*/
+			jedisClusterNodes.add(new HostAndPort("10.2.1.199", 6379));
+			jedisClusterNodes.add(new HostAndPort("10.2.1.199", 6380));
+			jedisClusterNodes.add(new HostAndPort("10.2.1.200", 6381));
+			jedisClusterNodes.add(new HostAndPort("10.2.1.200", 6382));
+			jedisClusterNodes.add(new HostAndPort("10.2.1.201", 6383));
+			jedisClusterNodes.add(new HostAndPort("10.2.1.201", 6384));
+
+			/*pro*/
+//			jedisClusterNodes.add(new HostAndPort("10.9.2.175", 6379));
+//			jedisClusterNodes.add(new HostAndPort("10.9.2.175", 6380));
+//			jedisClusterNodes.add(new HostAndPort("10.9.2.176", 6381));
+//			jedisClusterNodes.add(new HostAndPort("10.9.2.176", 6382));
+//			jedisClusterNodes.add(new HostAndPort("10.9.2.177", 6383));
+//			jedisClusterNodes.add(new HostAndPort("10.9.2.177", 6384));
 			jedisCluster = new JedisCluster(jedisClusterNodes);
 		} catch (Exception e) {
-			logger.error("RedisBaseCache Static Error:" + e.getMessage(), e);
+			logger.error("获取Redis集群实例错误:" + e.getMessage(), e);
 		}
 	}
 
 	protected synchronized static JedisCluster getJedis(){
-		try {
-			if (jedisCluster  == null) {
-				Set<HostAndPort> jedisClusterNodes = new HashSet<HostAndPort>();
-				jedisClusterNodes.add(new HostAndPort("10.2.1.201", 6376));
-				jedisCluster = new JedisCluster(jedisClusterNodes);
-			}
-			return jedisCluster;
-		} catch (Exception ex) {
-			logger.error("获取Redis集群实例错误:" + ex.getMessage(), ex);
-			return null;
+		if (jedisCluster  == null) {
+			initClusterConfig();
 		}
-
+		return jedisCluster;
 	}
 
 	/**
