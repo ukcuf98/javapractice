@@ -4,6 +4,7 @@ import sun.misc.BASE64Decoder;
 
 import javax.imageio.ImageIO;
 import java.io.*;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,21 +17,27 @@ import java.util.List;
 public class CodecSha1 {
 
     public static void main(String[] args){
-        String blank = new String(Base64.encodeBase64("".getBytes()));
+//        try{
+//            MessageDigest md = MessageDigest.getInstance("MD5");
+//        }catch (Exception e){
+//
+//        }
+
+        String blank = new String(Base64.encodeBase64("elastic:1q2w3e4r".getBytes()));
         System.out.println(blank);
         System.out.println(Base64.decodeBase64(blank));
-        String test = getImageStr("E://663145.jpg");
-        System.out.println(test);
-        GenerateImage(test);
-        String test2 = getStrFromPic("E://663145.jpg");
-        System.out.println(test2);
-        List<String> list = new ArrayList<String>();
-        list.add("abc");
-        list.add("15236");
-        list.add("lucifer");
-        Collections.sort(list);
-        String result = DigestUtils.shaHex(list.get(0)+list.get(1)+list.get(2));
-        System.out.println(result);
+//        String test = getImageStr("E://663145.jpg");
+//        System.out.println(test);
+//        GenerateImage(test);
+//        String test2 = getStrFromPic("E://663145.jpg");
+//        System.out.println(test2);
+//        List<String> list = new ArrayList<String>();
+//        list.add("abc");
+//        list.add("15236");
+//        list.add("lucifer");
+//        Collections.sort(list);
+//        String result = DigestUtils.shaHex(list.get(0)+list.get(1)+list.get(2));
+//        System.out.println(result);
     }
 
     public static String getImageStr(String path){
