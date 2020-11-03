@@ -1,24 +1,23 @@
 package es;
 
+import com.alibaba.fastjson.JSONObject;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
@@ -47,26 +46,19 @@ public class ElasticsearchUtil {
 //            String host = "127.0.0.1";
             String host = "10.2.2.101";
             Integer port = 9200;
+            //加密
+            String user = "elastic";
+            String password = "1q2w3e4r";
+            String base64 = new String(Base64.encodeBase64((user+":"+password).getBytes()));
+//            String base64 = "ZWxhc3RpYzoxcTJ3M2U0cg==";
             HttpHost[] httpHosts = new HttpHost[1];
             httpHosts[0] = new HttpHost(host, port);
             RestClientBuilder restClientBuilder = RestClient.builder(httpHosts);
             //安全认证信息
-//            BasicHeader basicHeader = new BasicHeader("Authorization", "Basic ZWxhc3RpYzoxcTJ3M2U0cg==");
-//            Header[] defaultHeaders = new Header[]{basicHeader};
-//            System.out.println(basicHeader.toString());
-
-//            BasicHeader basicHeader0 = new BasicHeader("auth_user", "elastic");
-//            BasicHeader basicHeader1 = new BasicHeader("auth_password", "1q2w3e4r");
-//            Header[] defaultHeaders = new Header[]{basicHeader0,basicHeader1};
-
-            BasicHeader basicHeader0 = new BasicHeader("Authorization", "Basic ZWxhc3RpYzoxcTJ3M2U0cg==");
-            BasicHeader basicHeader1 = new BasicHeader("Content-Type", "application/json");
-
-            BasicHeader basicHeader3 = new BasicHeader("auth_user", "elastic");
-            BasicHeader basicHeader4 = new BasicHeader("auth_password", "1q2w3e4r");
-            Header[] defaultHeaders = new Header[]{basicHeader0,basicHeader1,basicHeader3,basicHeader4};
+            BasicHeader basicHeader0 = new BasicHeader("Authorization", "Basic "+base64);
+            Header[] defaultHeaders = new Header[]{basicHeader0};
             restClientBuilder.setDefaultHeaders(defaultHeaders);
-            client = new RestHighLevelClient(RestClient.builder(httpHosts));
+            client = new RestHighLevelClient(restClientBuilder);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -94,6 +86,12 @@ public class ElasticsearchUtil {
         } catch (IOException e) {
             e.printStackTrace();
             return false;
+        }finally {
+            try{
+                client.close();
+            }catch (Exception e){
+
+            }
         }
         return true;
     }
@@ -114,6 +112,12 @@ public class ElasticsearchUtil {
         } catch (IOException e) {
             e.printStackTrace();
             flag = false;
+        }finally {
+            try{
+                client.close();
+            }catch (Exception e){
+
+            }
         }
         return flag;
     }
@@ -137,6 +141,12 @@ public class ElasticsearchUtil {
         } catch (IOException e) {
             e.printStackTrace();
             flag = false;
+        }finally {
+            try{
+                client.close();
+            }catch (Exception e){
+
+            }
         }
         return flag;
     }
@@ -153,11 +163,17 @@ public class ElasticsearchUtil {
             DeleteByQueryRequest request = new DeleteByQueryRequest(index);
             request.setQuery(query);
             BulkByScrollResponse response = client.deleteByQuery(request,RequestOptions.DEFAULT);
-            System.out.println(response.getStatus());
+//            System.out.println(response.getStatus());
             return true;
         }catch (Exception e){
             e.printStackTrace();
             return false;
+        }finally {
+            try{
+                client.close();
+            }catch (Exception e){
+
+            }
         }
     }
 
@@ -235,14 +251,24 @@ public class ElasticsearchUtil {
      * @param ids 多个逗号分隔
      * @throws Exception
      */
-    public static void deleteDataByids(String index, String ids) throws Exception{
+    public static void deleteDataByids(String index, String ids){
         validateClient();
-        String[] idArr = ids.split(",");
-        for (int i = 0; i < idArr.length; i++) {
-            String tmpId = idArr[i];
-            if(StringUtils.isNotBlank(tmpId)){
-                DeleteRequest request = new DeleteRequest(index, tmpId);
-                client.delete(request,RequestOptions.DEFAULT);
+        try{
+            String[] idArr = ids.split(",");
+            for (int i = 0; i < idArr.length; i++) {
+                String tmpId = idArr[i];
+                if(StringUtils.isNotBlank(tmpId)){
+                    DeleteRequest request = new DeleteRequest(index, tmpId);
+                    client.delete(request,RequestOptions.DEFAULT);
+                }
+            }
+        }catch (Exception e){
+
+        }finally {
+            try{
+                client.close();
+            }catch (Exception e){
+
             }
         }
     }
@@ -253,15 +279,25 @@ public class ElasticsearchUtil {
      * @param ids
      * @throws Exception
      */
-    public static boolean deleteDataByids(String index, List<String> ids) throws Exception{
+    public static boolean deleteDataByids(String index, List<String> ids){
         if(null == ids || ids.size() == 0){
             return true;
         }
-        for (int i = 0; i < ids.size(); i++) {
-            String tmpId = ids.get(i);
-            if(StringUtils.isNotBlank(tmpId)){
-                DeleteRequest request = new DeleteRequest(index, tmpId);
-                client.delete(request,RequestOptions.DEFAULT);
+        try{
+            for (int i = 0; i < ids.size(); i++) {
+                String tmpId = ids.get(i);
+                if(StringUtils.isNotBlank(tmpId)){
+                    DeleteRequest request = new DeleteRequest(index, tmpId);
+                    client.delete(request,RequestOptions.DEFAULT);
+                }
+            }
+        }catch (Exception e){
+            return false;
+        }finally {
+            try{
+                client.close();
+            }catch (Exception e){
+
             }
         }
         return true;
@@ -282,39 +318,57 @@ public class ElasticsearchUtil {
                 request.source(map);
                 bulkRequest.add(request);
             }
-            client.bulk(bulkRequest, RequestOptions.DEFAULT);
+            BulkResponse responses =client.bulk(bulkRequest, RequestOptions.DEFAULT);
+            System.out.println(responses);
         } catch (IOException e) {
             e.printStackTrace();
+        }finally {
+            try{
+                client.close();
+            }catch (Exception e){
+
+            }
         }
     }
 
-//    /**
-//     * 批量同步
-//     * @param index
-//     * @param data 数据json集合
-//     * @throws Exception
-//     */
-//    public static void bulkSyncJsonToEs(String index, List<String> data){
-//        validateClient();
-//        try {
-//            BulkRequest bulkRequest = new BulkRequest();
-//            for (String json : data) {
-//                IndexRequest request = new IndexRequest(index);
-//                request.source(json,XContentType.JSON);
-//                bulkRequest.add(request);
-//            }
-//            client.bulk(bulkRequest, RequestOptions.DEFAULT);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
     /**
      * 批量同步
      * @param index
      * @param data 数据json集合
      * @throws Exception
      */
-    public static void bulkSyncJsonToEs(String index, List<XContentBuilder> data){
+    public static void bulkSyncJsonToEs(String index, List<String> data){
+        validateClient();
+        try {
+            BulkRequest bulkRequest = new BulkRequest();
+            for (String json : data) {
+                IndexRequest request = new IndexRequest(index);
+                request.source(json,XContentType.JSON);
+                bulkRequest.add(request);
+            }
+            BulkResponse responses =client.bulk(bulkRequest, RequestOptions.DEFAULT);
+            boolean flag = responses.hasFailures();
+            if(flag){
+                String failureMsg = responses.buildFailureMessage();
+                System.out.println(failureMsg);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            try{
+                client.close();
+            }catch (Exception e){
+
+            }
+        }
+    }
+    /**
+     * 批量同步
+     * @param index
+     * @param data XContent数据集合
+     * @throws Exception
+     */
+    public static void bulkSyncXContentToEs(String index, List<XContentBuilder> data){
         validateClient();
         try {
             BulkRequest bulkRequest = new BulkRequest();
@@ -323,28 +377,27 @@ public class ElasticsearchUtil {
                 request.source(json);
                 bulkRequest.add(request);
             }
-            client.bulk(bulkRequest, RequestOptions.DEFAULT);
+            BulkResponse responses =client.bulk(bulkRequest, RequestOptions.DEFAULT);
+            boolean flag = responses.hasFailures();
+            if(flag){
+                String failureMsg = responses.buildFailureMessage();
+                System.out.println(failureMsg);
+            }
         } catch (IOException e) {
             e.printStackTrace();
+        }finally {
+            try{
+                client.close();
+            }catch (Exception e){
+
+            }
         }
     }
-
-//    /**
-//     * 单字段查询
-//     * @param index
-//     * @param type
-//     * @param primaryColumn
-//     * @param primaryColumn_value
-//     * @return
-//     */
-//    public static List<String> queryData(String index, String type, String primaryColumn, String primaryColumn_value){
-//
-//        return null;
-//    }
 
     public static void main(String[] args) {
         //添加数据
         try{
+//            //xcontent方式
 //            List<XContentBuilder> jsonList = new ArrayList<>();
 //            for (int i = 0; i < 10; i++) {
 ////                String json;
@@ -357,7 +410,35 @@ public class ElasticsearchUtil {
 //                builder.endObject();
 //                jsonList.add(builder);
 //            }
+//            ElasticsearchUtil.bulkSyncXContentToEs("tmp_apitest",jsonList);
+            //json方式
+//            List<String> jsonList = new ArrayList<>();
+//            String json;
+//            JSONObject jsonObject = new JSONObject();
+//            jsonObject.put("name","jsonname"+0);
+//            jsonObject.put("memo","jsonmemo"+0);
+//            Double[] location = {123.123,34.34};
+//            jsonObject.put("location",location);
+//            json = jsonObject.toJSONString();
+//            jsonList.add(json);
 //            ElasticsearchUtil.bulkSyncJsonToEs("tmp_apitest",jsonList);
+            //坐标格式错误的情况,会有报错信息
+//            List<String> jsonList = new ArrayList<>();
+//            String json;
+//            JSONObject jsonObject = new JSONObject();
+//            jsonObject.put("name","jsonname_"+0);
+//            jsonObject.put("memo","jsonmemo_"+0);
+//            Double[] location = {123.123,123.123};
+//            jsonObject.put("location",location);
+//            json = jsonObject.toJSONString();
+//            jsonList.add(json);
+//            ElasticsearchUtil.bulkSyncJsonToEs("tmp_apitest",jsonList);
+            //删除数据
+//            ElasticsearchUtil.deleteDataByids("tmp_apitest","bonfh3UBD2oShwWtWxH4");
+            //
+//            ElasticsearchUtil.createIndex("tmp_apitest");
+//            ElasticsearchUtil.deleteIndex("tmp_zwq");
+
             ElasticsearchUtil.deleteByIndex("tmp_apitest");
         }catch (Exception e){
             e.printStackTrace();
