@@ -12,12 +12,16 @@ import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
@@ -25,12 +29,14 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryRequest;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 基础的几类常用api
@@ -74,6 +80,16 @@ public class ElasticsearchUtil {
     }
 
     /**
+     * 验证是否有客户端链接
+     */
+    public static RestHighLevelClient getClient() {
+        if (client == null) {
+            createConnection();
+        }
+        return client;
+    }
+
+    /**
      * 创建索引
      * @param indexName index
      * @return 是否成功
@@ -89,6 +105,7 @@ public class ElasticsearchUtil {
         }finally {
             try{
                 client.close();
+                System.out.println(client);
             }catch (Exception e){
 
             }
@@ -171,6 +188,7 @@ public class ElasticsearchUtil {
         }finally {
             try{
                 client.close();
+                System.out.println(client);
             }catch (Exception e){
 
             }
@@ -309,7 +327,7 @@ public class ElasticsearchUtil {
      * @param data
      * @throws Exception
      */
-    public static void bulkSyncMapToEs(String index, List<Map<String, Object>> data){
+    public static boolean bulkSyncMapToEs(String index, List<Map<String, Object>> data){
         validateClient();
         try {
             BulkRequest bulkRequest = new BulkRequest();
@@ -319,9 +337,16 @@ public class ElasticsearchUtil {
                 bulkRequest.add(request);
             }
             BulkResponse responses =client.bulk(bulkRequest, RequestOptions.DEFAULT);
-            System.out.println(responses);
+            boolean flag = responses.hasFailures();
+            if(flag){
+                String failureMsg = responses.buildFailureMessage();
+                System.out.println(failureMsg);
+                return false;
+            }
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }finally {
             try{
                 client.close();
@@ -337,7 +362,7 @@ public class ElasticsearchUtil {
      * @param data 数据json集合
      * @throws Exception
      */
-    public static void bulkSyncJsonToEs(String index, List<String> data){
+    public static boolean bulkSyncJsonToEs(String index, List<String> data){
         validateClient();
         try {
             BulkRequest bulkRequest = new BulkRequest();
@@ -351,9 +376,12 @@ public class ElasticsearchUtil {
             if(flag){
                 String failureMsg = responses.buildFailureMessage();
                 System.out.println(failureMsg);
+                return false;
             }
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }finally {
             try{
                 client.close();
@@ -368,7 +396,7 @@ public class ElasticsearchUtil {
      * @param data XContent数据集合
      * @throws Exception
      */
-    public static void bulkSyncXContentToEs(String index, List<XContentBuilder> data){
+    public static boolean bulkSyncXContentToEs(String index, List<XContentBuilder> data){
         validateClient();
         try {
             BulkRequest bulkRequest = new BulkRequest();
@@ -382,9 +410,12 @@ public class ElasticsearchUtil {
             if(flag){
                 String failureMsg = responses.buildFailureMessage();
                 System.out.println(failureMsg);
+                return false;
             }
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }finally {
             try{
                 client.close();
@@ -392,6 +423,36 @@ public class ElasticsearchUtil {
 
             }
         }
+    }
+
+    /**
+     * 查索引总数
+     * @param index
+     * @return
+     */
+    public static Long queryTotalByIndex(String index){
+        validateClient();
+        try {
+            SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+            sourceBuilder.trackTotalHits(true);
+            SearchRequest searchRequest = new SearchRequest();
+            searchRequest.indices(index);
+            searchRequest.source(sourceBuilder);
+            SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+            Long total = response.getHits().getTotalHits().value;
+            System.out.println("total:"+total);
+            return total;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }finally {
+            try{
+                client.close();
+            }catch (Exception e){
+
+            }
+        }
+
     }
 
     public static void main(String[] args) {
@@ -422,6 +483,25 @@ public class ElasticsearchUtil {
 //            json = jsonObject.toJSONString();
 //            jsonList.add(json);
 //            ElasticsearchUtil.bulkSyncJsonToEs("tmp_apitest",jsonList);
+//            ElasticsearchUtil.deleteByIndex("tmp_apitest");
+//            //xcontent方式
+//            XContentBuilder contentBuilder = XContentFactory.jsonBuilder()
+//                    .startObject();
+//            contentBuilder.field("name","test1");
+//            contentBuilder.field("memo","memo1");
+//            contentBuilder.endObject();
+//            List<XContentBuilder> builderList = new ArrayList<>();
+//            builderList.add(contentBuilder);
+//            ElasticsearchUtil.bulkSyncXContentToEs("tmp_apitest",builderList);
+//            XContentBuilder contentBuilder1 = XContentFactory.jsonBuilder()
+//                    .startObject();
+//            contentBuilder1.field("name","test2");
+//            contentBuilder1.field("memo","memo2");
+//            contentBuilder1.endObject();
+//            List<XContentBuilder> builderList1 = new ArrayList<>();
+//            builderList1.add(contentBuilder1);
+//            ElasticsearchUtil.bulkSyncXContentToEs("tmp_apitest",builderList1);
+
             //坐标格式错误的情况,会有报错信息
 //            List<String> jsonList = new ArrayList<>();
 //            String json;
@@ -438,8 +518,7 @@ public class ElasticsearchUtil {
             //
 //            ElasticsearchUtil.createIndex("tmp_apitest");
 //            ElasticsearchUtil.deleteIndex("tmp_zwq");
-
-            ElasticsearchUtil.deleteByIndex("tmp_apitest");
+            ElasticsearchUtil.queryTotalByIndex("housemaketmv1");
         }catch (Exception e){
             e.printStackTrace();
         }
